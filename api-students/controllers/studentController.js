@@ -102,16 +102,17 @@ export const incrementAbsence = (req, res) => {
 				student.total_absences += 1;
 				return student.save();
 			} else {
-				res.status(404).send("pas d'étudiant avec cet id");
+				res.status(404).send("L'étudiant demandé est introuvable");
 				return null;
 			}
 		})
 		.then((student) => {
-			if (student) res.json(student);
+			res.json(student);
 		})
 		.catch((err) => {
+			console.error(err);
 			res
 				.status(500)
-				.send("échec lors de l'incrémentation du total d'absences");
+				.send("Une erreur est survenue lors de la mise à jour de L'étudiant");
 		});
 };

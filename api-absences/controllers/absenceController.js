@@ -1,28 +1,31 @@
-import axios from "axios";
+import { publishToQueue } from "../events/producer.js";
 import Absence from "../models/absence.js";
 
-// export const createAbsence = (req, res) => {
-// 	const { studentId, comment, date, status } = req.body;
-// 	const absence = new Absence({
-// 		studentId,
-// 		date,
-// 		status,
-// 		comment,
-// 	});
+export const createAbsence = async (req, res) => {
+	try {
+		const { studentId, comment, date, status } = req.body;
+		const absence = new Absence({
+			studentId,
+			date,
+			status,
+			comment,
+		});
+		await absence.save();
 
-// 	absence
-// 		.save()
-// 		.then((abs) => {
-// 			res.status(201).json({
-// 				message: "Absence created successfully!",
-// 			});
-// 		})
-// 		.catch((error) =>
-// 			res
-// 				.status(500)
-// 				.json({ message: "Error : can not add this absence " + error.message })
-// 		);
-// };
+		await publishToQueue("absenceCreated", {
+			studentId,
+			absenceId: absence._id,
+		});
+
+		res.status(201).json({
+			message: "Absence created successfully!",
+		});
+	} catch (error) {
+		res
+			.status(500)
+			.json({ message: "Error : can not add this absence " + error.message });
+	}
+};
 
 export const getAbsences = (req, res) => {
 	Absence.find()
@@ -111,27 +114,3 @@ export const getAbsencesByStudentId = (req, res) => {
 			})
 		);
 };
-
-export async function createAbsence(req, res) {
-	const { studentId, comment, date, status } = req.body;
-	const absence = new Absence({ studentId, date, status, comment });
-	try {
-		await absence.save();
-
-		const response = await axios.put(
-			`http://api-students:9000/students/${studentId}/increment-absence`
-		);
-		if (response.status !== 200) {
-			return res.status(500).json({
-				message:
-					"Absence créée avec succès, mais avec un échec de la mise à jour du nombre d'absences de l'étudiant",
-			});
-		}
-
-		res.status(201).json({ message: "Absence created successfully!" });
-	} catch (err) {
-		res
-			.status(500)
-			.json({ message: "peu pas ajouter ses absences " + err.message });
-	}
-}

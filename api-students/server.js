@@ -5,9 +5,10 @@ import {
 	deleteStudent,
 	getAllStudents,
 	getStudentById,
-	updateStudent,
 	incrementAbsence,
+	updateStudent,
 } from "./controllers/studentController.js";
+import { consumeCreateAbsenceQueue } from "./events/consumer.js";
 
 const app = express();
 const PORT = 9000;
@@ -18,14 +19,15 @@ app.get("/students/:id", getStudentById);
 app.post("/students", addNewStudent);
 app.put("/students/:id", updateStudent);
 app.delete("/students/:id", deleteStudent);
-// question 2
 app.put("/students/:id/increment-absence", incrementAbsence);
+
 sequelize
 	.sync()
 	.then(() => {
 		console.log("La base de données est connectée.");
 		app.listen(PORT, () => {
 			console.log(`Le serveur est en cours d'exécution sur le port ${PORT}.`);
+			consumeCreateAbsenceQueue();
 		});
 	})
 	.catch((error) => {
